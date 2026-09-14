@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="description"
@@ -25,7 +25,10 @@
   <script src="./static/js/index.js"></script>
   <script>
     MathJax = {
-      tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] }
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      }
     };
   </script>
   <script id="MathJax-script" async
@@ -107,12 +110,15 @@
       <img src="./static/images/framework.png"
            alt="MotionJEPA architecture: a JEPA encoder–predictor in blue, DISReg in green, and losses in red."
            class="architecture-figure">
-      <h2 class="subtitle has-text-centered" style="margin-top: 1rem;">
-        <strong>MotionJEPA overview.</strong>
-        DISReg uses a temporal difference-image embedding \(d_t\) as visually grounded
-        collapse prevention for changing features. The core JEPA encoder and predictor
-        are shown in blue, DISReg in green, and the training losses in red.
-      </h2>
+      <div class="columns is-centered">
+        <div class="column is-four-fifths">
+          <p class="has-text-centered" style="margin-top: 1rem;">
+            <strong>MotionJEPA overview.</strong>
+            MotionJEPA uses our novel DISReg, whose temporal difference-image embedding
+            \(d_t\) provides visually grounded collapse prevention for changing features.
+          </p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -122,6 +128,7 @@
   <div class="container is-max-desktop">
     <div class="columns is-centered has-text-centered">
       <div class="column is-four-fifths">
+        <div class="abstract-box">
         <h2 class="title is-3">Abstract</h2>
         <div class="content has-text-justified">
           <p>
@@ -149,12 +156,66 @@
             We further show that MotionJEPA improves downstream planning success under
             static-background distractors across four environments.
           </p>
-          <div class="tldr">
-            <strong>TL;DR:</strong> MotionJEPA is a JEPA world model that prevents temporal
-            feature collapse with DISReg — a difference-image regularizer that keeps both
-            static and dynamic information in the latent — yielding more complete probes
-            and stronger planning when the background is a static distractor.
-          </div>
+        </div>
+        </div>
+        <p style="color: #aaa; font-size: 0.88rem; margin-top: 2.5rem; text-align: justify;">
+          <strong style="color: #000;">TL;DR:</strong>
+          MotionJEPA is a JEPA-based world model that avoids temporal feature collapse
+          using DISReg, a difference-image regularizer that enables more stable, balanced
+          learning of static and dynamic features.
+          DISReg's dynamic term encourages dynamic features to be present without constraining
+          the shape or distribution of the image latent, resulting in simple latent trajectories
+          for downstream planning in the presence of static distractors.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" id="approach">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Approach</h2>
+        <div class="content has-text-justified">
+          <p>
+            <strong>DISReg.</strong>
+            DISReg adds two components to a standard JEPA:
+            a difference-image encoder
+            \(\mathrm{DiffEnc}_{\alpha}\)
+            and an inverse-dynamics-style predictor
+            \(\mathrm{DiffPred}_{\beta}\).
+            \(\mathrm{DiffPred}_{\beta}\) predicts the difference latent \(d_t\) from consecutive
+            image embeddings \(z_t\) and \(z_{t+1}\), with no pixel reconstruction and no
+            action or state labels as targets:
+          </p>
+          <p style="text-align: center;">
+            $$\begin{aligned}
+              d_t &= \mathrm{DiffEnc}_{\alpha}(o_{t+1} - o_t) \\
+              \hat{d}_{t} &= \mathrm{DiffPred}_{\beta}(z_t, z_{t+1})
+            \end{aligned}$$
+          </p>
+          <p>
+            <strong>Training objective.</strong>
+            We use SIGReg to prevent \(z\) and \(d\) from collapsing.
+            The MSE of the dynamic term, \(\mathrm{MSE}(d_t,\hat{d}_t)\), only asks that visual
+            changes be present in \(z_t\) and \(z_{t+1}\), without constraining the
+            shape or distribution of the image latent.
+            The full loss is the typical next-embedding prediction plus DISReg
+            (\(\lambda_z{=}0.25\), \(\lambda_{\mathrm{pred}}{=}0.5\), \(\lambda_d{=}2\)):
+          </p>
+          <p style="text-align: center;">
+            $$\mathcal{L}_{\mathrm{DISReg}}
+              = \lambda_z\,\mathrm{SIGReg}(z)
+              + \lambda_d\,\mathrm{SIGReg}(d)
+              + \lambda_{\mathrm{pred}}\,\mathrm{MSE}(d_t,\hat{d}_t)$$
+          </p>
+          <p style="text-align: center;">
+            $$\mathcal{L}_{\mathrm{MotionJEPA}}
+              = \mathcal{L}_{\mathrm{DISReg}}
+              + \mathrm{MSE}(z_{t+1},\hat{z}_{t+1})$$
+          </p>
         </div>
       </div>
     </div>
@@ -163,33 +224,38 @@
 
 
 <section class="section">
-  <div class="container is-max-widescreen">
-    <div class="columns is-centered">
-      <div class="column is-full">
+  <div class="container is-max-desktop">
         <h2 class="title is-3 has-text-centered">Latent Probing</h2>
-        <div class="content has-text-justified">
-          <p>
-            We probe frozen encoder embeddings \(z\) with residual MLPs on three synthetic
-            games with separable feature groups. Normalized MSE of \(1.0\) is chance
-            (predicting the evaluation-set mean). Green cells recover a feature
-            (\(\mathrm{NMSE}\le 0.1\)); red cells are collapsed. Bold / underline mark
-            best / second-best. Models marked <em>*</em> use per-environment
-            hyperparameter search; MotionJEPA uses one setting
-            (\(\lambda_z{=}0.25\), \(\lambda_{\mathrm{pred}}{=}0.5\), \(\lambda_d{=}2\))
-            on all three games.
-          </p>
+        <div class="columns is-centered">
+          <div class="column is-four-fifths">
+            <p class="has-text-justified" style="margin-bottom: 1rem;">
+              We probe frozen encoder embeddings \(z\) with residual MLPs on three synthetic
+              games with separable feature groups. An NMSE of \(1.0\) corresponds to
+              predicting the evaluation-target mean: the probe extracts no useful
+              information from \(z\).
+              Starred baselines use per-environment hyperparameter
+              search; MotionJEPA uses one setting
+              (\(\lambda_z{=}0.25\), \(\lambda_{\mathrm{pred}}{=}0.5\), \(\lambda_d{=}2\))
+              on all three games.
+            </p>
+          </div>
         </div>
-        <div class="table-wrap">
-          <table class="table is-narrow is-hoverable results-table">
+        <div class="table-container" style="overflow-x: auto; margin-bottom: 2rem;">
+          <p style="font-size: 0.9em; margin-bottom: 0.75rem; text-align: justify;">
+            <strong>Offline residual-MLP probe NMSE \(\downarrow\) of the image embedding \(z\).</strong>
+            MotionJEPA is the only method with NMSE \(\leq 0.1\) on every feature group.
+            Feature-group values \(\leq 0.1\) are green; values above are red.
+            Bold / underline mark best / second-best among the rows shown.
+          </p>
+          <table class="table is-bordered is-striped is-hoverable is-fullwidth probing-table" style="font-size: 0.82em; text-align: center;">
             <thead>
               <tr>
-                <th class="method"></th>
-                <th class="env-group" colspan="4">Pong</th>
-                <th class="env-group" colspan="6">Dino</th>
-                <th class="env-group" colspan="5">Golf</th>
+                <th rowspan="2" class="method-head">Method</th>
+                <th colspan="4" class="env-head">Pong<img class="env-thumb" src="./static/images/env_pong.png" alt="Pong"></th>
+                <th colspan="6" class="env-head">Dino<img class="env-thumb" src="./static/images/env_dino.png" alt="Dino"></th>
+                <th colspan="5" class="env-head">Golf<img class="env-thumb" src="./static/images/env_golf.png" alt="Golf"></th>
               </tr>
               <tr>
-                <th class="method">Method</th>
                 <th>avg.</th><th>ball</th><th>bats</th><th>score</th>
                 <th>avg.</th><th>cactus</th><th>clouds</th><th>dino</th><th>hearts</th><th>sky</th>
                 <th>avg.</th><th>bars</th><th>cross</th><th>ball</th><th>wood</th>
@@ -197,131 +263,62 @@
             </thead>
             <tbody>
               <tr>
-                <td class="method">ForwardOnly</td>
-                <td>1.058</td>
-                <td class="nmse-bad">1.260</td><td class="nmse-bad">1.001</td><td class="nmse-bad">0.930</td>
-                <td>0.949</td>
-                <td class="nmse-bad">1.003</td><td class="nmse-bad">1.002</td><td class="nmse-bad">1.002</td><td class="nmse-bad">1.031</td><td class="nmse-bad">0.511</td>
-                <td>1.980</td>
-                <td class="nmse-bad">1.233</td><td class="nmse-bad">1.558</td><td class="nmse-bad">1.077</td><td class="nmse-bad">4.324</td>
-              </tr>
-              <tr>
-                <td class="method">Random</td>
-                <td>0.116</td>
-                <td class="nmse-bad">0.143</td><td class="nmse-ok">0.093</td><td class="nmse-bad">0.115</td>
-                <td>0.361</td>
-                <td class="nmse-bad">0.833</td><td class="nmse-bad">0.535</td><td class="nmse-bad">0.116</td><td class="nmse-ok">0.031</td><td class="nmse-ok best">0.004</td>
-                <td>0.776</td>
-                <td class="nmse-bad">0.857</td><td class="nmse-bad">0.296</td><td class="nmse-bad">0.989</td><td class="nmse-bad">0.653</td>
-              </tr>
-              <tr>
-                <td class="method">SMWM</td>
-                <td>0.657</td>
-                <td class="nmse-bad">1.001</td><td class="nmse-ok second">0.002</td><td class="nmse-bad">1.002</td>
-                <td>0.649</td>
-                <td class="nmse-bad">0.434</td><td class="nmse-bad">1.075</td><td class="nmse-ok">0.028</td><td class="nmse-bad">0.787</td><td class="nmse-ok">0.071</td>
+                <td style="text-align: left;">SMWM*</td>
+                <td>0.651</td>
+                <td class="nmse-bad">0.983</td><td class="nmse-ok best">0.002</td><td class="nmse-bad">1.003</td>
+                <td>0.606</td>
+                <td class="nmse-bad">0.398</td><td class="nmse-bad">1.005</td><td class="nmse-ok second">0.003</td><td class="nmse-bad">0.775</td><td class="nmse-ok">0.069</td>
                 <td>0.727</td>
                 <td class="nmse-bad">1.000</td><td class="nmse-bad">0.986</td><td class="nmse-ok best">0.002</td><td class="nmse-bad">1.003</td>
               </tr>
               <tr>
-                <td class="method">LeWM</td>
-                <td>0.658</td>
-                <td class="nmse-bad">0.999</td><td class="nmse-bad">1.002</td><td class="nmse-ok best">0.003</td>
-                <td>0.394</td>
-                <td class="nmse-bad">0.769</td><td class="nmse-bad">0.248</td><td class="nmse-bad">0.983</td><td class="nmse-ok">0.012</td><td class="nmse-ok">0.005</td>
-                <td>0.763</td>
-                <td class="nmse-bad">1.002</td><td class="nmse-bad">1.001</td><td class="nmse-bad">0.942</td><td class="nmse-ok">0.084</td>
-              </tr>
-              <tr>
-                <td class="method">LeWM-Time</td>
-                <td>1.077</td>
-                <td class="nmse-bad">1.100</td><td class="nmse-bad">1.071</td><td class="nmse-bad">1.063</td>
-                <td>0.913</td>
-                <td class="nmse-bad">1.003</td><td class="nmse-bad">0.992</td><td class="nmse-bad">1.002</td><td class="nmse-bad">1.029</td><td class="nmse-bad">0.248</td>
-                <td>1.053</td>
-                <td class="nmse-bad">1.008</td><td class="nmse-bad">1.014</td><td class="nmse-bad">1.004</td><td class="nmse-bad">1.195</td>
-              </tr>
-              <tr>
-                <td class="method">LeWM-Detached</td>
-                <td>0.171</td>
-                <td class="nmse-bad">0.174</td><td class="nmse-bad">0.331</td><td class="nmse-ok">0.007</td>
-                <td>0.645</td>
-                <td class="nmse-bad">1.002</td><td class="nmse-bad">0.727</td><td class="nmse-bad">1.002</td><td class="nmse-ok">0.017</td><td class="nmse-ok">0.006</td>
-                <td>0.811</td>
-                <td class="nmse-bad">0.924</td><td class="nmse-bad">0.683</td><td class="nmse-bad">0.930</td><td class="nmse-bad">0.572</td>
-              </tr>
-              <tr>
-                <td class="method">LeWM-Flat</td>
-                <td>0.284</td>
-                <td class="nmse-bad">0.890</td><td class="nmse-ok">0.014</td><td class="nmse-ok">0.005</td>
-                <td>0.331</td>
-                <td class="nmse-bad">0.522</td><td class="nmse-bad">0.593</td><td class="nmse-ok best">0.002</td><td class="nmse-ok best">0.006</td><td class="nmse-ok">0.007</td>
-                <td>0.694</td>
-                <td class="nmse-bad">1.002</td><td class="nmse-bad">0.379</td><td class="nmse-bad">0.993</td><td class="nmse-ok">0.052</td>
-              </tr>
-              <tr>
-                <td class="method">SMWM*</td>
-                <td>0.651</td>
-                <td class="nmse-bad">0.983</td><td class="nmse-ok best">0.002</td><td class="nmse-bad">1.003</td>
-                <td>0.606</td>
-                <td class="nmse-bad">0.398</td><td class="nmse-bad">1.005</td><td class="nmse-ok">0.003</td><td class="nmse-bad">0.775</td><td class="nmse-ok">0.069</td>
-                <td>0.727</td>
-                <td class="nmse-bad">1.000</td><td class="nmse-bad">0.986</td><td class="nmse-ok second">0.002</td><td class="nmse-bad">1.003</td>
-              </tr>
-              <tr>
-                <td class="method">LeWM*</td>
+                <td style="text-align: left;">LeWM*</td>
                 <td>0.061</td>
                 <td class="nmse-bad">0.163</td><td class="nmse-ok">0.018</td><td class="nmse-ok">0.012</td>
                 <td class="second">0.282</td>
-                <td class="nmse-bad">0.990</td><td class="nmse-ok second">0.059</td><td class="nmse-bad">0.751</td><td class="nmse-ok">0.011</td><td class="nmse-ok">0.012</td>
+                <td class="nmse-bad">0.990</td><td class="nmse-ok second">0.059</td><td class="nmse-bad">0.751</td><td class="nmse-ok">0.011</td><td class="nmse-ok second">0.012</td>
                 <td>0.760</td>
                 <td class="nmse-bad">1.001</td><td class="nmse-bad">1.002</td><td class="nmse-bad">0.909</td><td class="nmse-bad">0.110</td>
               </tr>
               <tr>
-                <td class="method">LeWM-Time*</td>
+                <td style="text-align: left;">LeWM-Time*</td>
                 <td>0.687</td>
                 <td class="nmse-ok">0.022</td><td class="nmse-bad">0.972</td><td class="nmse-bad">1.002</td>
                 <td>0.697</td>
-                <td class="nmse-ok best">0.005</td><td class="nmse-bad">1.004</td><td class="nmse-ok">0.003</td><td class="nmse-bad">0.971</td><td class="nmse-bad">1.004</td>
+                <td class="nmse-ok best">0.005</td><td class="nmse-bad">1.004</td><td class="nmse-ok second">0.003</td><td class="nmse-bad">0.971</td><td class="nmse-bad">1.004</td>
                 <td>0.985</td>
                 <td class="nmse-bad">0.972</td><td class="nmse-bad">0.992</td><td class="nmse-bad">0.984</td><td class="nmse-bad">1.002</td>
               </tr>
               <tr>
-                <td class="method">LeWM-Detached*</td>
+                <td style="text-align: left;">LeWM-Detached*</td>
                 <td>0.048</td>
-                <td class="nmse-bad">0.103</td><td class="nmse-ok">0.038</td><td class="nmse-ok">0.008</td>
+                <td class="nmse-bad">0.103</td><td class="nmse-ok">0.038</td><td class="nmse-ok second">0.008</td>
                 <td>0.332</td>
                 <td class="nmse-bad">1.005</td><td class="nmse-ok">0.073</td><td class="nmse-bad">0.959</td><td class="nmse-ok">0.011</td><td class="nmse-ok">0.017</td>
                 <td>0.745</td>
                 <td class="nmse-bad">1.002</td><td class="nmse-bad">1.002</td><td class="nmse-bad">0.908</td><td class="nmse-ok second">0.048</td>
               </tr>
               <tr>
-                <td class="method">LeWM-Flat*</td>
+                <td style="text-align: left;">LeWM-Flat*</td>
                 <td class="second">0.008</td>
-                <td class="nmse-ok second">0.012</td><td class="nmse-ok">0.004</td><td class="nmse-ok">0.008</td>
+                <td class="nmse-ok second">0.012</td><td class="nmse-ok">0.004</td><td class="nmse-ok second">0.008</td>
                 <td>0.301</td>
-                <td class="nmse-bad">0.650</td><td class="nmse-bad">0.498</td><td class="nmse-ok second">0.002</td><td class="nmse-ok">0.007</td><td class="nmse-ok">0.016</td>
+                <td class="nmse-bad">0.650</td><td class="nmse-bad">0.498</td><td class="nmse-ok best">0.002</td><td class="nmse-ok second">0.007</td><td class="nmse-ok">0.016</td>
                 <td class="second">0.299</td>
                 <td class="nmse-bad second">0.317</td><td class="nmse-ok best">0.059</td><td class="nmse-bad">0.312</td><td class="nmse-bad">0.377</td>
               </tr>
-              <tr class="ours">
-                <td class="method"><strong>MotionJEPA (Ours)</strong></td>
+              <tr style="border-top: 2px solid #363636;">
+                <td style="text-align: left;"><strong>MotionJEPA (Ours)</strong></td>
                 <td class="best">0.004</td>
-                <td class="nmse-ok best">0.005</td><td class="nmse-ok">0.003</td><td class="nmse-ok second">0.004</td>
+                <td class="nmse-ok best">0.005</td><td class="nmse-ok second">0.003</td><td class="nmse-ok best">0.004</td>
                 <td class="best">0.021</td>
-                <td class="nmse-ok second">0.011</td><td class="nmse-ok best">0.037</td><td class="nmse-ok">0.006</td><td class="nmse-ok second">0.006</td><td class="nmse-ok second">0.004</td>
+                <td class="nmse-ok second">0.011</td><td class="nmse-ok best">0.037</td><td class="nmse-ok">0.006</td><td class="nmse-ok best">0.006</td><td class="nmse-ok best">0.004</td>
                 <td class="best">0.061</td>
-                <td class="nmse-ok best">0.095</td><td class="nmse-ok second">0.083</td><td class="nmse-ok">0.033</td><td class="nmse-ok best">0.033</td>
+                <td class="nmse-ok best">0.095</td><td class="nmse-ok second">0.083</td><td class="nmse-ok second">0.033</td><td class="nmse-ok best">0.033</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <p class="has-text-centered is-size-7" style="margin-top: 0.5rem;">
-          Offline residual-MLP probe NMSE \(\downarrow\) of the image embedding \(z\).
-          MotionJEPA is the only method with NMSE below \(0.1\) on every feature group.
-        </p>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -331,13 +328,14 @@
     <h2 class="title is-3 has-text-centered">Latent Straightness</h2>
     <div class="content has-text-justified">
       <p>
-        We visualize how individual state features map into the latent.
+        We visualize how individual state features of the Golf game map into the image embedding \(z\).
         Each panel varies one feature over a 1D range while holding the rest of the
-        state fixed, encodes the rendered frames, and projects the resulting trajectory
-        onto the first two principal components (no variance rescaling).
-        Color runs from violet (\(0\)) to red (\(1\)).
-        MotionJEPA keeps these paths geometrically simple; collapsed models fold or
-        scramble the dynamic features.
+        state fixed.
+        We show the first two principal components of this latent trajectory
+        (with no variance rescaling).
+        LeWM* collapses the crosses and bars nearly to a single point, and the
+        LeWM-Flat* variant yields trajectories with substantially more folds and
+        scrambles, while MotionJEPA keeps these paths geometrically simple.
       </p>
     </div>
     <img src="./static/gifs/latent_straightness.gif"
@@ -350,19 +348,27 @@
 <section class="section">
   <div class="container is-max-desktop">
     <h2 class="title is-3 has-text-centered">Planning under Static Distractors</h2>
-    <div class="content has-text-justified">
-      <p>
-        We evaluate CEM planning on the four LeWorldModel control tasks after overlaying
-        a static wood-texture distractor. Initial states are sampled from the test split;
-        horizons are 25 and 50 environment steps. MotionJEPA is the strongest standalone
-        method; combining it with inverse dynamics (Ours + IDM) is best overall.
-      </p>
+    <div class="columns is-centered">
+      <div class="column is-four-fifths">
+        <p class="has-text-justified" style="margin-bottom: 1rem;">
+          We evaluate CEM planning on the four LeWorldModel control tasks after replacing
+          the original background with a wood texture, using a different crop per episode
+          and keeping that crop fixed within the episode.
+          Initial states are sampled from the test split; horizons are 25 and 50 environment steps.
+          Averaged across all environments, MotionJEPA outperforms IDM by +4.6 at 25-step
+          planning and +11.0 at 50-step planning.
+        </p>
+      </div>
     </div>
-    <div class="table-wrap">
-      <table class="table is-narrow is-hoverable results-table" style="margin-left: auto; margin-right: auto;">
+    <div class="table-container" style="overflow-x: auto; margin-bottom: 2rem;">
+      <p style="font-size: 0.9em; margin-bottom: 0.75rem; text-align: justify;">
+        <strong>Planning success rate (%)</strong> under static-background distractors.
+        Bold / underline: best / second-best among the rows shown.
+      </p>
+      <table class="table is-bordered is-striped is-hoverable is-fullwidth" style="font-size: 0.82em; text-align: center;">
         <thead>
           <tr>
-            <th class="method">Method</th>
+            <th style="text-align: left;">Method</th>
             <th>Cube</th>
             <th>PushT</th>
             <th>Reach.</th>
@@ -371,54 +377,39 @@
           </tr>
         </thead>
         <tbody>
-          <tr><td class="method" colspan="6"><em>25-step planning</em></td></tr>
           <tr>
-            <td class="method">LeWM</td>
+            <th colspan="6" style="text-align: center; background-color: #f8f8f8; font-weight: normal; font-style: italic;">25-step planning</th>
+          </tr>
+          <tr>
+            <td style="text-align: left;">LeWM</td>
             <td>43.6</td><td>4.0</td><td>5.2</td><td>28.8</td><td>20.4</td>
           </tr>
           <tr>
-            <td class="method">IDM</td>
-            <td>76.0</td><td class="best">83.6</td><td>49.2</td><td class="best">100.0</td><td>77.2</td>
+            <td style="text-align: left;">IDM</td>
+            <td class="second">76.0</td><td class="best">83.6</td><td class="second">49.2</td><td class="best">100.0</td><td class="second">77.2</td>
           </tr>
           <tr>
-            <td class="method">Ours (\(\lambda_z{=}0\))</td>
-            <td>60.4</td><td>76.8</td><td>24.8</td><td>99.6</td><td>65.4</td>
+            <td style="text-align: left;"><strong>MotionJEPA (Ours)</strong></td>
+            <td class="best">78.0</td><td class="second">78.4</td><td class="best">71.2</td><td class="second">99.6</td><td class="best">81.8</td>
           </tr>
           <tr>
-            <td class="method">Ours</td>
-            <td class="second">78.0</td><td>78.4</td><td class="second">71.2</td><td>99.6</td><td class="second">81.8</td>
+            <th colspan="6" style="text-align: center; background-color: #f8f8f8; font-weight: normal; font-style: italic;">50-step planning</th>
           </tr>
-          <tr class="ours">
-            <td class="method"><strong>Ours + IDM</strong></td>
-            <td class="best">80.8</td><td class="second">82.4</td><td class="best">82.4</td><td class="best">100.0</td><td class="best">86.4</td>
-          </tr>
-          <tr><td class="method" colspan="6"><em>50-step planning</em></td></tr>
           <tr>
-            <td class="method">LeWM</td>
+            <td style="text-align: left;">LeWM</td>
             <td>24.4</td><td>2.4</td><td>2.0</td><td>18.4</td><td>11.8</td>
           </tr>
           <tr>
-            <td class="method">IDM</td>
-            <td>53.2</td><td>26.0</td><td>62.0</td><td class="second">96.0</td><td>59.3</td>
+            <td style="text-align: left;">IDM</td>
+            <td class="second">53.2</td><td class="second">26.0</td><td class="second">62.0</td><td class="best">96.0</td><td class="second">59.3</td>
           </tr>
           <tr>
-            <td class="method">Ours (\(\lambda_z{=}0\))</td>
-            <td>48.0</td><td>21.2</td><td>33.6</td><td>94.0</td><td>49.2</td>
-          </tr>
-          <tr>
-            <td class="method">Ours</td>
-            <td class="best">63.2</td><td class="second">28.0</td><td class="second">98.0</td><td>92.0</td><td class="second">70.3</td>
-          </tr>
-          <tr class="ours">
-            <td class="method"><strong>Ours + IDM</strong></td>
-            <td class="second">61.2</td><td class="best">29.6</td><td class="best">98.4</td><td class="best">97.2</td><td class="best">71.6</td>
+            <td style="text-align: left;"><strong>MotionJEPA (Ours)</strong></td>
+            <td class="best">63.2</td><td class="best">28.0</td><td class="best">98.0</td><td class="second">92.0</td><td class="best">70.3</td>
           </tr>
         </tbody>
       </table>
     </div>
-    <p class="has-text-centered is-size-7" style="margin-top: 0.5rem;">
-      Planning success rate (%). Bold / underline: best / second-best in each column.
-    </p>
   </div>
 </section>
 
@@ -426,76 +417,50 @@
 <section class="section" style="padding-top: 0;">
   <div class="container is-max-desktop">
     <h2 class="title is-4 has-text-centered">Qualitative 25-step rollouts</h2>
-    <div class="content has-text-justified">
-      <p>
-        Side-by-side CEM planning with a static wood-texture distractor.
-        <strong>Left:</strong> MotionJEPA.
-        <strong>Right:</strong> original LeWM.
-        All clips below are cases where MotionJEPA succeeds and LeWM fails.
-      </p>
+    <div class="columns is-centered">
+      <div class="column is-four-fifths">
+        <p class="has-text-justified">
+          Side-by-side CEM planning with a wood-texture background.
+          <strong>Left:</strong> MotionJEPA.
+          <strong>Right:</strong> original LeWM.
+          All clips below are cases where MotionJEPA succeeds and LeWM fails.
+        </p>
+      </div>
     </div>
 
     <h3 class="title is-5 has-text-centered">Cube</h3>
     <div class="columns is-centered planning-clip">
-      <div class="column is-6">
+      <div class="column is-four-fifths">
         <video autoplay muted loop playsinline controls>
           <source src="./static/videos/cube_case00.mp4" type="video/mp4">
         </video>
-        <p class="has-text-centered is-size-7 label">Ours success · LeWM failure</p>
-      </div>
-      <div class="column is-6">
-        <video autoplay muted loop playsinline controls>
-          <source src="./static/videos/cube_case10.mp4" type="video/mp4">
-        </video>
-        <p class="has-text-centered is-size-7 label">Ours success · LeWM failure</p>
       </div>
     </div>
 
-    <h3 class="title is-5 has-text-centered">Push-T</h3>
+    <h3 class="title is-5 has-text-centered">PushT</h3>
     <div class="columns is-centered planning-clip">
-      <div class="column is-6">
+      <div class="column is-four-fifths">
         <video autoplay muted loop playsinline controls>
           <source src="./static/videos/pusht_case00.mp4" type="video/mp4">
         </video>
-        <p class="has-text-centered is-size-7 label">Ours success · LeWM failure</p>
-      </div>
-      <div class="column is-6">
-        <video autoplay muted loop playsinline controls>
-          <source src="./static/videos/pusht_case01.mp4" type="video/mp4">
-        </video>
-        <p class="has-text-centered is-size-7 label">Ours success · LeWM failure</p>
       </div>
     </div>
 
     <h3 class="title is-5 has-text-centered">Reacher</h3>
     <div class="columns is-centered planning-clip">
-      <div class="column is-6">
+      <div class="column is-four-fifths">
         <video autoplay muted loop playsinline controls>
           <source src="./static/videos/reacher_case01.mp4" type="video/mp4">
         </video>
-        <p class="has-text-centered is-size-7 label">Ours success · LeWM failure</p>
-      </div>
-      <div class="column is-6">
-        <video autoplay muted loop playsinline controls>
-          <source src="./static/videos/reacher_case04.mp4" type="video/mp4">
-        </video>
-        <p class="has-text-centered is-size-7 label">Ours success · LeWM failure</p>
       </div>
     </div>
 
     <h3 class="title is-5 has-text-centered">Two-Room</h3>
     <div class="columns is-centered planning-clip">
-      <div class="column is-6">
+      <div class="column is-four-fifths">
         <video autoplay muted loop playsinline controls>
           <source src="./static/videos/tworoom_case00.mp4" type="video/mp4">
         </video>
-        <p class="has-text-centered is-size-7 label">Ours success · LeWM failure</p>
-      </div>
-      <div class="column is-6">
-        <video autoplay muted loop playsinline controls>
-          <source src="./static/videos/tworoom_case01.mp4" type="video/mp4">
-        </video>
-        <p class="has-text-centered is-size-7 label">Ours success · LeWM failure</p>
       </div>
     </div>
   </div>

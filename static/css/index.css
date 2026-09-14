@@ -157,43 +157,52 @@ body {
 }
 
 .architecture-figure {
-  width: 100%;
+  display: block;
+  width: 68%;
+  max-width: 640px;
   height: auto;
+  margin: 0 auto;
   border-radius: 6px;
 }
 
-.tldr {
-  background: #f4f8fa;
-  border-left: 4px solid #3273dc;
-  padding: 0.9rem 1.1rem;
-  border-radius: 4px;
-  margin-top: 1rem;
+.abstract-box {
+  background-color: #f8f8f8;
+  border-radius: 8px;
+  padding: 2rem 2.5rem;
+  max-width: 680px;
+  margin: 0 auto;
 }
 
-.table-wrap {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.results-table {
+.table-container table {
   font-variant-numeric: tabular-nums;
-  font-size: 0.78rem;
-  margin-bottom: 0.5rem !important;
 }
 
-.results-table th,
-.results-table td {
-  text-align: center;
-  vertical-align: middle;
+.probing-table thead tr:first-child th:first-child,
+.probing-table tbody td:first-child {
   white-space: nowrap;
+  width: 1%;
+  padding-left: 0.5em;
+  padding-right: 0.4em;
 }
 
-.results-table .method {
+.probing-table .method-head {
+  vertical-align: bottom;
   text-align: left;
 }
 
-.results-table .env-group {
-  background: #f4f6f8;
+.probing-table .env-head {
+  text-align: center;
+  vertical-align: bottom;
+}
+
+.probing-table .env-thumb {
+  display: block;
+  width: 108px;
+  height: 108px;
+  object-fit: cover;
+  margin: 0.4rem auto 0;
+  border-radius: 4px;
+  image-rendering: pixelated;
 }
 
 .nmse-ok {
@@ -210,10 +219,6 @@ body {
 
 .second {
   text-decoration: underline;
-}
-
-tr.ours td {
-  background: #eef6fb;
 }
 
 .latent-gif {
