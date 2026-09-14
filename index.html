@@ -231,8 +231,15 @@
             <p class="has-text-justified" style="margin-bottom: 1rem;">
               We probe frozen encoder embeddings \(z\) with residual MLPs on three synthetic
               games with separable feature groups. An NMSE of \(1.0\) corresponds to
-              predicting the evaluation-target mean: the probe extracts no useful
-              information from \(z\).
+              predicting the evaluation-target mean (the probe extracts no useful
+              information from \(z\)).
+              Besides LeWM and SMWM, we include LeWM variants with common
+              anti-collapse modifications:
+              <strong>LeWM-Time</strong> applies SIGReg along the time dimension,
+              <strong>LeWM-Flat</strong> applies SIGReg along the flattened batch and time
+              dimension, and
+              <strong>LeWM-Detached</strong> adds a stop-gradient on the JEPA predictor
+              target \(\mathrm{MSE}(\mathrm{StopGradient}(z_{t+1}), \hat{z}_{t+1})\).
               Starred baselines use per-environment hyperparameter
               search; MotionJEPA uses one setting
               (\(\lambda_z{=}0.25\), \(\lambda_{\mathrm{pred}}{=}0.5\), \(\lambda_d{=}2\))
