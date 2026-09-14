@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="MotionJEPA: Preventing Temporal Feature Collapse by Capturing Visual Changes in Latent Space.">
+  <meta name="keywords" content="MotionJEPA, DISReg, JEPA, world models, latent planning">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MotionJEPA: Preventing Temporal Feature Collapse by Capturing Visual Changes in Latent Space</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/favicon.svg">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/index.js"></script>
+  <script>
+    MathJax = {
+      tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] }
+    };
+  </script>
+  <script id="MathJax-script" async
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">MotionJEPA</h1>
+          <h2 class="subtitle is-3 publication-title" style="margin-top: -0.6rem;">
+            Preventing Temporal Feature Collapse by Capturing Visual Changes in Latent Space
+          </h2>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">Markus Karmann<sup>1,*</sup>,</span>
+            <span class="author-block">Shile Li<sup>2,*</sup>,</span>
+            <span class="author-block">Christian Internò<sup>3,1</sup>,</span>
+            <span class="author-block">Bruno Andreis<sup>1,4</sup>,</span>
+            <span class="author-block">David Klindt<sup>5</sup>,</span>
+            <span class="author-block">Randall Balestriero<sup>6,7</sup>,</span>
+            <span class="author-block">Jindong Gu<sup>1</sup>,</span>
+            <span class="author-block">Philip Torr<sup>1,4</sup>,</span>
+            <span class="author-block">Qi Zhang<sup>8</sup>,</span>
+            <span class="author-block">Peng-Tao Jiang<sup>8</sup>,</span>
+            <span class="author-block">Hao Zhang<sup>8</sup>,</span>
+            <span class="author-block">Bo Li<sup>8</sup>,</span>
+            <span class="author-block">Onay Urfalioglu<sup>2</sup></span>
+          </div>
+
+          <div class="is-size-6 publication-authors" style="margin-top: 0.75rem;">
+            <span class="author-block"><sup>1</sup>University of Oxford,</span>
+            <span class="author-block"><sup>2</sup>vivo Tech Research GmbH,</span>
+            <span class="author-block"><sup>3</sup>Bielefeld University,</span>
+            <span class="author-block"><sup>4</sup>Slater Labs,</span>
+            <span class="author-block"><sup>5</sup>Cold Spring Harbor Laboratory,</span>
+            <span class="author-block"><sup>6</sup>Brown University,</span>
+            <span class="author-block"><sup>7</sup>AMI Labs,</span>
+            <span class="author-block"><sup>8</sup>vivo Mobile Communication Co., Ltd.</span>
+          </div>
+          <div class="is-size-6 publication-authors">
+            <span class="author-block"><sup>*</sup>Equal contribution</span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <span class="link-block">
+                <a href="#abstract"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                    <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://github.com/mkarmann/motion-jepa"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                    <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                </a>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <img src="./static/images/framework.png"
+           alt="MotionJEPA architecture: a JEPA encoder–predictor in blue, DISReg in green, and losses in red."
+           class="architecture-figure">
+      <h2 class="subtitle has-text-centered" style="margin-top: 1rem;">
+        <strong>MotionJEPA overview.</strong>
+        DISReg uses a temporal difference-image embedding \(d_t\) as visually grounded
+        collapse prevention for changing features. The core JEPA encoder and predictor
+        are shown in blue, DISReg in green, and the training losses in red.
+      </h2>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" id="abstract">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Joint Embedding Predictive Architectures (JEPAs) are a promising paradigm for
+            learning task-agnostic latent world models without visual reconstruction.
+            However, standard JEPA training exhibits a strong inductive bias towards slow
+            features, causing feature suppression and the collapse of latent representation.
+            While inverse dynamics provides temporal anti-collapse, it relies on action
+            labels and offers little incentive to embed general, unlabeled dynamics.
+            We introduce <strong>D</strong>ifference <strong>I</strong>mage and
+            <strong>S</strong>ingle image embedding <strong>Reg</strong>ularization
+            (DISReg), a novel regularizer that builds on an inverse-dynamics-style module
+            that predicts temporal difference image embeddings without any pixel
+            reconstruction loss, encouraging balanced static and dynamic feature learning.
+            DISReg consists of a static term that shapes the distribution of the image
+            embedding and encourages slow features, and a dynamic term, which, unlike
+            direct regularization on the embedding, imposes no constraint on the image
+            embedding's shape or distribution and instead only incentivizes that dynamic
+            features be present.
+            By integrating this regularizer into a standard JEPA, we establish our new
+            architecture, MotionJEPA.
+            Latent probing demonstrates that MotionJEPA produces more complete
+            representations than other methods, and our trajectory analysis shows it
+            maintains geometrically simple latent embeddings with low curvature.
+            We further show that MotionJEPA improves downstream planning success under
+            static-background distractors across four environments.
+          </p>
+          <div class="tldr">
+            <strong>TL;DR:</strong> MotionJEPA is a JEPA world model that prevents temporal
+            feature collapse with DISReg — a difference-image regularizer that keeps both
+            static and dynamic information in the latent — yielding more complete probes
+            and stronger planning when the background is a static distractor.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-widescreen">
+    <div class="columns is-centered">
+      <div class="column is-full">
+        <h2 class="title is-3 has-text-centered">Latent Probing</h2>
+        <div class="content has-text-justified">
+          <p>
+            We probe frozen encoder embeddings \(z\) with residual MLPs on three synthetic
+            games with separable feature groups. Normalized MSE of \(1.0\) is chance
+            (predicting the evaluation-set mean). Green cells recover a feature
+            (\(\mathrm{NMSE}\le 0.1\)); red cells are collapsed. Bold / underline mark
+            best / second-best. Models marked <em>*</em> use per-environment
+            hyperparameter search; MotionJEPA uses one setting
+            (\(\lambda_z{=}0.25\), \(\lambda_{\mathrm{pred}}{=}0.5\), \(\lambda_d{=}2\))
+            on all three games.
+          </p>
+        </div>
+        <div class="table-wrap">
+          <table class="table is-narrow is-hoverable results-table">
+            <thead>
+              <tr>
+                <th class="method"></th>
+                <th class="env-group" colspan="4">Pong</th>
+                <th class="env-group" colspan="6">Dino</th>
+                <th class="env-group" colspan="5">Golf</th>
+              </tr>
+              <tr>
+                <th class="method">Method</th>
+                <th>avg.</th><th>ball</th><th>bats</th><th>score</th>
+                <th>avg.</th><th>cactus</th><th>clouds</th><th>dino</th><th>hearts</th><th>sky</th>
+                <th>avg.</th><th>bars</th><th>cross</th><th>ball</th><th>wood</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="method">ForwardOnly</td>
+                <td>1.058</td>
+                <td class="nmse-bad">1.260</td><td class="nmse-bad">1.001</td><td class="nmse-bad">0.930</td>
+                <td>0.949</td>
+                <td class="nmse-bad">1.003</td><td class="nmse-bad">1.002</td><td class="nmse-bad">1.002</td><td class="nmse-bad">1.031</td><td class="nmse-bad">0.511</td>
+                <td>1.980</td>
+                <td class="nmse-bad">1.233</td><td class="nmse-bad">1.558</td><td class="nmse-bad">1.077</td><td class="nmse-bad">4.324</td>
+              </tr>
+              <tr>
+                <td class="method">Random</td>
+                <td>0.116</td>
+                <td class="nmse-bad">0.143</td><td class="nmse-ok">0.093</td><td class="nmse-bad">0.115</td>
+                <td>0.361</td>
+                <td class="nmse-bad">0.833</td><td class="nmse-bad">0.535</td><td class="nmse-bad">0.116</td><td class="nmse-ok">0.031</td><td class="nmse-ok best">0.004</td>
+                <td>0.776</td>
+                <td class="nmse-bad">0.857</td><td class="nmse-bad">0.296</td><td class="nmse-bad">0.989</td><td class="nmse-bad">0.653</td>
+              </tr>
+              <tr>
+                <td class="method">SMWM</td>
+                <td>0.657</td>
+                <td class="nmse-bad">1.001</td><td class="nmse-ok second">0.002</td><td class="nmse-bad">1.002</td>
+                <td>0.649</td>
+                <td class="nmse-bad">0.434</td><td class="nmse-bad">1.075</td><td class="nmse-ok">0.028</td><td class="nmse-bad">0.787</td><td class="nmse-ok">0.071</td>
+                <td>0.727</td>
+                <td class="nmse-bad">1.000</td><td class="nmse-bad">0.986</td><td class="nmse-ok best">0.002</td><td class="nmse-bad">1.003</td>
+              </tr>
+              <tr>
+                <td class="method">LeWM</td>
+                <td>0.658</td>
+                <td class="nmse-bad">0.999</td><td class="nmse-bad">1.002</td><td class="nmse-ok best">0.003</td>
+                <td>0.394</td>
+                <td class="nmse-bad">0.769</td><td class="nmse-bad">0.248</td><td class="nmse-bad">0.983</td><td class="nmse-ok">0.012</td><td class="nmse-ok">0.005</td>
+                <td>0.763</td>
+                <td class="nmse-bad">1.002</td><td class="nmse-bad">1.001</td><td class="nmse-bad">0.942</td><td class="nmse-ok">0.084</td>
+              </tr>
+              <tr>
+                <td class="method">LeWM-Time</td>
+                <td>1.077</td>
+                <td class="nmse-bad">1.100</td><td class="nmse-bad">1.071</td><td class="nmse-bad">1.063</td>
+                <td>0.913</td>
+                <td class="nmse-bad">1.003</td><td class="nmse-bad">0.992</td><td class="nmse-bad">1.002</td><td class="nmse-bad">1.029</td><td class="nmse-bad">0.248</td>
+                <td>1.053</td>
+                <td class="nmse-bad">1.008</td><td class="nmse-bad">1.014</td><td class="nmse-bad">1.004</td><td class="nmse-bad">1.195</td>
+              </tr>
+              <tr>
+                <td class="method">LeWM-Detached</td>
+                <td>0.171</td>
+                <td class="nmse-bad">0.174</td><td class="nmse-bad">0.331</td><td class="nmse-ok">0.007</td>
+                <td>0.645</td>
+                <td class="nmse-bad">1.002</td><td class="nmse-bad">0.727</td><td class="nmse-bad">1.002</td><td class="nmse-ok">0.017</td><td class="nmse-ok">0.006</td>
+                <td>0.811</td>
+                <td class="nmse-bad">0.924</td><td class="nmse-bad">0.683</td><td class="nmse-bad">0.930</td><td class="nmse-bad">0.572</td>
+              </tr>
+              <tr>
+                <td class="method">LeWM-Flat</td>
+                <td>0.284</td>
+                <td class="nmse-bad">0.890</td><td class="nmse-ok">0.014</td><td class="nmse-ok">0.005</td>
+                <td>0.331</td>
+                <td class="nmse-bad">0.522</td><td class="nmse-bad">0.593</td><td class="nmse-ok best">0.002</td><td class="nmse-ok best">0.006</td><td class="nmse-ok">0.007</td>
+                <td>0.694</td>
+                <td class="nmse-bad">1.002</td><td class="nmse-bad">0.379</td><td class="nmse-bad">0.993</td><td class="nmse-ok">0.052</td>
+              </tr>
+              <tr>
+                <td class="method">SMWM*</td>
+                <td>0.651</td>
+                <td class="nmse-bad">0.983</td><td class="nmse-ok best">0.002</td><td class="nmse-bad">1.003</td>
+                <td>0.606</td>
+                <td class="nmse-bad">0.398</td><td class="nmse-bad">1.005</td><td class="nmse-ok">0.003</td><td class="nmse-bad">0.775</td><td class="nmse-ok">0.069</td>
+                <td>0.727</td>
+                <td class="nmse-bad">1.000</td><td class="nmse-bad">0.986</td><td class="nmse-ok second">0.002</td><td class="nmse-bad">1.003</td>
+              </tr>
+              <tr>
+                <td class="method">LeWM*</td>
+                <td>0.061</td>
+                <td class="nmse-bad">0.163</td><td class="nmse-ok">0.018</td><td class="nmse-ok">0.012</td>
+                <td class="second">0.282</td>
+                <td class="nmse-bad">0.990</td><td class="nmse-ok second">0.059</td><td class="nmse-bad">0.751</td><td class="nmse-ok">0.011</td><td class="nmse-ok">0.012</td>
+                <td>0.760</td>
+                <td class="nmse-bad">1.001</td><td class="nmse-bad">1.002</td><td class="nmse-bad">0.909</td><td class="nmse-bad">0.110</td>
+              </tr>
+              <tr>
+                <td class="method">LeWM-Time*</td>
+                <td>0.687</td>
+                <td class="nmse-ok">0.022</td><td class="nmse-bad">0.972</td><td class="nmse-bad">1.002</td>
+                <td>0.697</td>
+                <td class="nmse-ok best">0.005</td><td class="nmse-bad">1.004</td><td class="nmse-ok">0.003</td><td class="nmse-bad">0.971</td><td class="nmse-bad">1.004</td>
+                <td>0.985</td>
+                <td class="nmse-bad">0.972</td><td class="nmse-bad">0.992</td><td class="nmse-bad">0.984</td><td class="nmse-bad">1.002</td>
+              </tr>
+              <tr>
+                <td class="method">LeWM-Detached*</td>
+                <td>0.048</td>
+                <td class="nmse-bad">0.103</td><td class="nmse-ok">0.038</td><td class="nmse-ok">0.008</td>
+                <td>0.332</td>
+                <td class="nmse-bad">1.005</td><td class="nmse-ok">0.073</td><td class="nmse-bad">0.959</td><td class="nmse-ok">0.011</td><td class="nmse-ok">0.017</td>
+                <td>0.745</td>
+                <td class="nmse-bad">1.002</td><td class="nmse-bad">1.002</td><td class="nmse-bad">0.908</td><td class="nmse-ok second">0.048</td>
+              </tr>
+              <tr>
+                <td class="method">LeWM-Flat*</td>
+                <td class="second">0.008</td>
+                <td class="nmse-ok second">0.012</td><td class="nmse-ok">0.004</td><td class="nmse-ok">0.008</td>
+                <td>0.301</td>
+                <td class="nmse-bad">0.650</td><td class="nmse-bad">0.498</td><td class="nmse-ok second">0.002</td><td class="nmse-ok">0.007</td><td class="nmse-ok">0.016</td>
+                <td class="second">0.299</td>
+                <td class="nmse-bad second">0.317</td><td class="nmse-ok best">0.059</td><td class="nmse-bad">0.312</td><td class="nmse-bad">0.377</td>
+              </tr>
+              <tr class="ours">
+                <td class="method"><strong>MotionJEPA (Ours)</strong></td>
+                <td class="best">0.004</td>
+                <td class="nmse-ok best">0.005</td><td class="nmse-ok">0.003</td><td class="nmse-ok second">0.004</td>
+                <td class="best">0.021</td>
+                <td class="nmse-ok second">0.011</td><td class="nmse-ok best">0.037</td><td class="nmse-ok">0.006</td><td class="nmse-ok second">0.006</td><td class="nmse-ok second">0.004</td>
+                <td class="best">0.061</td>
+                <td class="nmse-ok best">0.095</td><td class="nmse-ok second">0.083</td><td class="nmse-ok">0.033</td><td class="nmse-ok best">0.033</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="has-text-centered is-size-7" style="margin-top: 0.5rem;">
+          Offline residual-MLP probe NMSE \(\downarrow\) of the image embedding \(z\).
+          MotionJEPA is the only method with NMSE below \(0.1\) on every feature group.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" style="padding-top: 0;">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Latent Straightness</h2>
+    <div class="content has-text-justified">
+      <p>
+        We visualize how individual state features map into the latent.
+        Each panel varies one feature over a 1D range while holding the rest of the
+        state fixed, encodes the rendered frames, and projects the resulting trajectory
+        onto the first two principal components (no variance rescaling).
+        Color runs from violet (\(0\)) to red (\(1\)).
+        MotionJEPA keeps these paths geometrically simple; collapsed models fold or
+        scramble the dynamic features.
+      </p>
+    </div>
+    <img src="./static/gifs/latent_straightness.gif"
+         alt="Animated PCA trajectories of latent embeddings while sweeping individual Golf state features."
+         class="latent-gif">
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Planning under Static Distractors</h2>
+    <div class="content has-text-justified">
+      <p>
+        We evaluate CEM planning on the four LeWorldModel control tasks after overlaying
+        a static wood-texture distractor. Initial states are sampled from the test split;
+        horizons are 25 and 50 environment steps. MotionJEPA is the strongest standalone
+        method; combining it with inverse dynamics (Ours + IDM) is best overall.
+      </p>
+    </div>
+    <div class="table-wrap">
+      <table class="table is-narrow is-hoverable results-table" style="margin-left: auto; margin-right: auto;">
+        <thead>
+          <tr>
+            <th class="method">Method</th>
+            <th>Cube</th>
+            <th>PushT</th>
+            <th>Reach.</th>
+            <th>2Room</th>
+            <th>Mean</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="method" colspan="6"><em>25-step planning</em></td></tr>
+          <tr>
+            <td class="method">LeWM</td>
+            <td>43.6</td><td>4.0</td><td>5.2</td><td>28.8</td><td>20.4</td>
+          </tr>
+          <tr>
+            <td class="method">IDM</td>
+            <td>76.0</td><td class="best">83.6</td><td>49.2</td><td class="best">100.0</td><td>77.2</td>
+          </tr>
+          <tr>
+            <td class="method">Ours (\(\lambda_z{=}0\))</td>
+            <td>60.4</td><td>76.8</td><td>24.8</td><td>99.6</td><td>65.4</td>
+          </tr>
+          <tr>
+            <td class="method">Ours</td>
+            <td class="second">78.0</td><td>78.4</td><td class="second">71.2</td><td>99.6</td><td class="second">81.8</td>
+          </tr>
+          <tr class="ours">
+            <td class="method"><strong>Ours + IDM</strong></td>
+            <td class="best">80.8</td><td class="second">82.4</td><td class="best">82.4</td><td class="best">100.0</td><td class="best">86.4</td>
+          </tr>
+          <tr><td class="method" colspan="6"><em>50-step planning</em></td></tr>
+          <tr>
+            <td class="method">LeWM</td>
+            <td>24.4</td><td>2.4</td><td>2.0</td><td>18.4</td><td>11.8</td>
+          </tr>
+          <tr>
+            <td class="method">IDM</td>
+            <td>53.2</td><td>26.0</td><td>62.0</td><td class="second">96.0</td><td>59.3</td>
+          </tr>
+          <tr>
+            <td class="method">Ours (\(\lambda_z{=}0\))</td>
+            <td>48.0</td><td>21.2</td><td>33.6</td><td>94.0</td><td>49.2</td>
+          </tr>
+          <tr>
+            <td class="method">Ours</td>
+            <td class="best">63.2</td><td class="second">28.0</td><td class="second">98.0</td><td>92.0</td><td class="second">70.3</td>
+          </tr>
+          <tr class="ours">
+            <td class="method"><strong>Ours + IDM</strong></td>
+            <td class="second">61.2</td><td class="best">29.6</td><td class="best">98.4</td><td class="best">97.2</td><td class="best">71.6</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="has-text-centered is-size-7" style="margin-top: 0.5rem;">
+      Planning success rate (%). Bold / underline: best / second-best in each column.
+    </p>
+  </div>
+</section>
+
+
+<section class="section" style="padding-top: 0;">
+  <div class="container is-max-desktop">
+    <h2 class="title is-4 has-text-centered">Qualitative 25-step rollouts</h2>
+    <div class="content has-text-justified">
+      <p>
+        Side-by-side CEM planning with a static wood-texture distractor.
+        <strong>Left:</strong> MotionJEPA.
+        <strong>Right:</strong> original LeWM.
+        All clips below are cases where MotionJEPA succeeds and LeWM fails.
+      </p>
+    </div>
+
+    <h3 class="title is-5 has-text-centered">Cube</h3>
+    <div class="columns is-centered planning-clip">
+      <div class="column is-6">
+        <video autoplay muted loop playsinline controls>
+          <source src="./static/videos/cube_case00.mp4" type="video/mp4">
+        </video>
+        <p class="has-text-centered is-size-7 label">Ours success · LeWM failure</p>
+      </div>
+      <div class="column is-6">
+        <video autoplay muted loop playsinline controls>
+          <source src="./static/videos/cube_case10.mp4" type="video/mp4">
+        </video>
+        <p class="has-text-centered is-size-7 label">Ours success · LeWM failure</p>
+      </div>
+    </div>
+
+    <h3 class="title is-5 has-text-centered">Push-T</h3>
+    <div class="columns is-centered planning-clip">
+      <div class="column is-6">
+        <video autoplay muted loop playsinline controls>
+          <source src="./static/videos/pusht_case00.mp4" type="video/mp4">
+        </video>
+        <p class="has-text-centered is-size-7 label">Ours success · LeWM failure</p>
+      </div>
+      <div class="column is-6">
+        <video autoplay muted loop playsinline controls>
+          <source src="./static/videos/pusht_case01.mp4" type="video/mp4">
+        </video>
+        <p class="has-text-centered is-size-7 label">Ours success · LeWM failure</p>
+      </div>
+    </div>
+
+    <h3 class="title is-5 has-text-centered">Reacher</h3>
+    <div class="columns is-centered planning-clip">
+      <div class="column is-6">
+        <video autoplay muted loop playsinline controls>
+          <source src="./static/videos/reacher_case01.mp4" type="video/mp4">
+        </video>
+        <p class="has-text-centered is-size-7 label">Ours success · LeWM failure</p>
+      </div>
+      <div class="column is-6">
+        <video autoplay muted loop playsinline controls>
+          <source src="./static/videos/reacher_case04.mp4" type="video/mp4">
+        </video>
+        <p class="has-text-centered is-size-7 label">Ours success · LeWM failure</p>
+      </div>
+    </div>
+
+    <h3 class="title is-5 has-text-centered">Two-Room</h3>
+    <div class="columns is-centered planning-clip">
+      <div class="column is-6">
+        <video autoplay muted loop playsinline controls>
+          <source src="./static/videos/tworoom_case00.mp4" type="video/mp4">
+        </video>
+        <p class="has-text-centered is-size-7 label">Ours success · LeWM failure</p>
+      </div>
+      <div class="column is-6">
+        <video autoplay muted loop playsinline controls>
+          <source src="./static/videos/tworoom_case01.mp4" type="video/mp4">
+        </video>
+        <p class="has-text-centered is-size-7 label">Ours success · LeWM failure</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>@article{motionjepa2026,
+  author    = {Karmann, Markus and Li, Shile and Intern{\`o}, Christian and Andreis, Bruno
+               and Klindt, David and Balestriero, Randall and Gu, Jindong and Torr, Philip
+               and Zhang, Qi and Jiang, Peng-Tao and Zhang, Hao and Li, Bo and Urfalioglu, Onay},
+  title     = {MotionJEPA: Preventing Temporal Feature Collapse by Capturing Visual Changes in Latent Space},
+  year      = {2026},
+}</code></pre>
+  </div>
+</section>
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            This website is licensed under a
+            <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"
+               target="_blank">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+            It is built from the
+            <a href="https://github.com/nerfies/nerfies.github.io" target="_blank">Nerfies</a>
+            project-page template; please keep this attribution if you reuse the layout.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
