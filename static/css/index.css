@@ -184,15 +184,15 @@ body {
 
 .probing-table th,
 .probing-table td {
-  padding: 0.22em 0.28em;
+  padding: 0.22em 0.1em;
 }
 
 .probing-table thead tr:first-child th:first-child,
 .probing-table tbody td:first-child {
   white-space: nowrap;
   width: 1%;
-  padding-left: 0.4em;
-  padding-right: 0.28em;
+  padding-left: 0.22em;
+  padding-right: 0.1em;
 }
 
 .probing-table .method-head {
