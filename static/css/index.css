@@ -158,8 +158,8 @@ body {
 
 .architecture-figure {
   display: block;
-  width: 68%;
-  max-width: 640px;
+  width: 76%;
+  max-width: 700px;
   height: auto;
   margin: 0 auto;
   border-radius: 6px;
@@ -235,6 +235,18 @@ body {
   width: 100%;
   height: auto;
   border-radius: 6px;
+}
+
+.feature-suppression video {
+  display: block;
+  width: 100%;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.feature-suppression-caption {
+  margin-top: 1rem;
+  text-align: justify;
 }
 
 .planning-clip video {

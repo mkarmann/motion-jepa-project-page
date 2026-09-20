@@ -69,7 +69,7 @@
             <span class="author-block"><sup>5</sup>Cold Spring Harbor Laboratory,</span>
             <span class="author-block"><sup>6</sup>Brown University,</span>
             <span class="author-block"><sup>7</sup>AMI Labs,</span>
-            <span class="author-block"><sup>8</sup>vivo Mobile Communication Co., Ltd.</span>
+            <span class="author-block"><sup>8</sup>vivo BlueImage Lab, vivo Mobile Communication Co., Ltd., China</span>
           </div>
           <div class="is-size-6 publication-authors">
             <span class="author-block"><sup>*</sup>Equal contribution</span>
@@ -106,18 +106,21 @@
 
 <section class="hero teaser">
   <div class="container is-max-desktop">
-    <div class="hero-body">
-      <img src="./static/images/framework.png"
-           alt="MotionJEPA architecture: a JEPA encoder–predictor in blue, DISReg in green, and losses in red."
-           class="architecture-figure">
-      <div class="columns is-centered">
-        <div class="column is-four-fifths">
-          <p class="has-text-centered" style="margin-top: 1rem;">
-            <strong>MotionJEPA overview.</strong>
-            MotionJEPA uses our novel DISReg, whose temporal difference-image embedding
-            \(d_t\) provides visually grounded collapse prevention for changing features.
-          </p>
-        </div>
+    <div class="hero-body" style="padding-bottom: 1.5rem;">
+      <div class="feature-suppression">
+        <video autoplay muted loop playsinline controls
+               aria-label="Visual probes of Pong: GT, LeWM-star, SMWM-star, and MotionJEPA.">
+          <source src="./static/videos/visual_probe_rollout_video_pong.mp4" type="video/mp4">
+        </video>
+        <p class="feature-suppression-caption">
+          <strong>Feature suppression.</strong>
+          Visual probes of JEPA models trained on Pong.
+          LeWM* focuses on slow features, reconstructing the scoreboard and bats
+          but suppressing the fast-moving ball.
+          SMWM* focuses on action-labeled features and encodes mainly the bats.
+          MotionJEPA learns a more balanced representation, correctly predicting
+          the score change and simulating the ball movement.
+        </p>
       </div>
     </div>
   </div>
@@ -166,6 +169,24 @@
           DISReg's dynamic term encourages dynamic features to be present without constraining
           the shape or distribution of the image latent, resulting in simple latent trajectories
           for downstream planning in the presence of static distractors.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-four-fifths">
+        <img src="./static/images/framework.png"
+             alt="MotionJEPA architecture: a JEPA encoder–predictor in blue, DISReg in green, and losses in red."
+             class="architecture-figure">
+        <p class="has-text-justified" style="margin-top: 1rem;">
+          <strong>MotionJEPA overview.</strong>
+          MotionJEPA uses our novel DISReg, whose temporal difference-image embedding
+          \(d_t\) provides visually grounded collapse prevention for changing features.
         </p>
       </div>
     </div>
@@ -288,15 +309,6 @@
                 <td class="nmse-bad">1.001</td><td class="nmse-bad">1.002</td><td class="nmse-bad">0.909</td><td class="nmse-bad">0.110</td>
               </tr>
               <tr>
-                <td style="text-align: left;">LeWM-Time*</td>
-                <td>0.687</td>
-                <td class="nmse-ok">0.022</td><td class="nmse-bad">0.972</td><td class="nmse-bad">1.002</td>
-                <td>0.697</td>
-                <td class="nmse-ok best">0.005</td><td class="nmse-bad">1.004</td><td class="nmse-ok second">0.003</td><td class="nmse-bad">0.971</td><td class="nmse-bad">1.004</td>
-                <td>0.985</td>
-                <td class="nmse-bad">0.972</td><td class="nmse-bad">0.992</td><td class="nmse-bad">0.984</td><td class="nmse-bad">1.002</td>
-              </tr>
-              <tr>
                 <td style="text-align: left;">LeWM-Detached*</td>
                 <td>0.048</td>
                 <td class="nmse-bad">0.103</td><td class="nmse-ok">0.038</td><td class="nmse-ok second">0.008</td>
@@ -304,6 +316,15 @@
                 <td class="nmse-bad">1.005</td><td class="nmse-ok">0.073</td><td class="nmse-bad">0.959</td><td class="nmse-ok">0.011</td><td class="nmse-ok">0.017</td>
                 <td>0.745</td>
                 <td class="nmse-bad">1.002</td><td class="nmse-bad">1.002</td><td class="nmse-bad">0.908</td><td class="nmse-ok second">0.048</td>
+              </tr>
+              <tr>
+                <td style="text-align: left;">LeWM-Time*</td>
+                <td>0.687</td>
+                <td class="nmse-ok">0.022</td><td class="nmse-bad">0.972</td><td class="nmse-bad">1.002</td>
+                <td>0.697</td>
+                <td class="nmse-ok best">0.005</td><td class="nmse-bad">1.004</td><td class="nmse-ok second">0.003</td><td class="nmse-bad">0.971</td><td class="nmse-bad">1.004</td>
+                <td>0.985</td>
+                <td class="nmse-bad">0.972</td><td class="nmse-bad">0.992</td><td class="nmse-bad">0.984</td><td class="nmse-bad">1.002</td>
               </tr>
               <tr>
                 <td style="text-align: left;">LeWM-Flat*</td>
